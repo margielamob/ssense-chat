@@ -4,7 +4,6 @@ import time
 import os
 from dotenv import load_dotenv
 
-# Import specific errors available in cohere==5.14.0
 from cohere.errors import (
     TooManyRequestsError,
     BadRequestError,
@@ -14,22 +13,19 @@ from cohere.errors import (
     ServiceUnavailableError
 )
 
-# --- Configuration ---
 load_dotenv()
 COHERE_API_KEY = os.getenv("COHERE_API_KEY")
 INPUT_FILENAME = "cleaned_sentences.json"
-OUTPUT_FILENAME = "cohere_extracted_rules_v4.json" # Increment output filename
+OUTPUT_FILENAME = "cohere_extracted_rules_v4.json" 
 COHERE_MODEL = "command-a-03-2025"
 REQUESTS_PER_MINUTE_LIMIT = 10
 SLEEP_TIME_SECONDS = 61
 
-# --- Cohere Client Initialization ---
 if not COHERE_API_KEY:
     raise ValueError("COHERE_API_KEY environment variable not set.")
 print(f"Initializing Cohere client for model: {COHERE_MODEL}")
 co = cohere.Client(COHERE_API_KEY, client_name="logic_extractor_script", timeout=120)
 
-# --- Load Input Data ---
 try:
     with open(INPUT_FILENAME, "r", encoding="utf-8") as f:
         cleaned_sentences = json.load(f)
@@ -47,7 +43,6 @@ except Exception as e:
     exit(1)
 
 
-# --- Define the JSON Schema for the response format ---
 response_format = {
   "type": "json_object",
   "json_schema": {
@@ -88,7 +83,6 @@ response_format = {
 
 
 def make_prompt(sentence):
-    # Prompt instructing the model to extract rules into the specified JSON format
     return f"""Analyze the following return policy sentence and extract the core logic into a structured JSON format.
 Strictly adhere to the required JSON schema: the output MUST be a JSON object containing a single key "rules", which is an array of rule objects. Each rule object MUST have a "rule" (string identifier) and "conditions" (object detailing the rule specifics). The conditions object MUST have at least a "type" field and can contain additional key-value pairs. Do not include explanations, markdown formatting, or any text outside the final JSON object.
 
@@ -120,13 +114,11 @@ Sentence to Analyze:
 JSON Output:
 """
 
-# --- Process Sentences ---
 extracted_logic = []
 request_count = 0
 total_sentences = len(cleaned_sentences)
 
 for i, sentence in enumerate(cleaned_sentences):
-    # --- Rate Limiting ---
     if request_count > 0 and request_count % REQUESTS_PER_MINUTE_LIMIT == 0:
         print(f"\n⏳ Rate limit threshold ({REQUESTS_PER_MINUTE_LIMIT} requests) reached. Sleeping for {SLEEP_TIME_SECONDS} seconds...")
         time.sleep(SLEEP_TIME_SECONDS)
@@ -147,9 +139,7 @@ for i, sentence in enumerate(cleaned_sentences):
         output = response.text.strip()
         print(f"→ Raw Output:\n{output}")
 
-        # --- Parse Output ---
         try:
-            # Basic cleanup
             if output.startswith("```json"):
                 output = output[7:]
             elif output.startswith("```"):
@@ -160,7 +150,6 @@ for i, sentence in enumerate(cleaned_sentences):
 
             parsed = json.loads(output)
 
-            # Basic validation
             if isinstance(parsed, dict) and "rules" in parsed and isinstance(parsed["rules"], list):
                  extracted_logic.append({"sentence": sentence, "logic": parsed})
                  print("→ Status: Successfully parsed valid JSON structure")
@@ -177,20 +166,17 @@ for i, sentence in enumerate(cleaned_sentences):
 
         time.sleep(1.2)
 
-    # --- Error Handling based on dir(cohere.errors) ---
     except TooManyRequestsError as e:
         request_count += 1
         print(f"→ Status: Cohere Rate Limit Error (429) - {e}. Sleeping for {SLEEP_TIME_SECONDS} seconds...")
         extracted_logic.append({"sentence": sentence, "error": str(e), "error_type": "TooManyRequestsError"})
-        time.sleep(SLEEP_TIME_SECONDS) # Sleep when rate limited
+        time.sleep(SLEEP_TIME_SECONDS)
 
     except BadRequestError as e:
         request_count += 1
         print(f"→ Status: Cohere Bad Request Error (400) - {e}. Check prompt, model parameters, or JSON schema.")
         extracted_logic.append({"sentence": sentence, "error": str(e), "error_type": "BadRequestError"})
-        # If this error persists, there might be another schema issue or a problem the model can't handle.
-        # Consider stopping if this error repeats many times.
-        time.sleep(2) # Short sleep after bad request
+        time.sleep(2)
 
     except (UnauthorizedError, ForbiddenError) as e:
         request_count += 1
@@ -202,7 +188,7 @@ for i, sentence in enumerate(cleaned_sentences):
         request_count += 1
         print(f"→ Status: Cohere Server Error ({type(e).__name__}) - {e}. Waiting before retry...")
         extracted_logic.append({"sentence": sentence, "error": str(e), "error_type": type(e).__name__})
-        time.sleep(15) # Wait longer for server-side issues
+        time.sleep(15)
 
     except Exception as e:
         request_count += 1
@@ -211,8 +197,6 @@ for i, sentence in enumerate(cleaned_sentences):
         extracted_logic.append({"sentence": sentence, "error": str(e), "error_type": "GeneralError - " + error_type_name})
         time.sleep(2)
 
-
-# --- Save Results ---
 try:
     with open(OUTPUT_FILENAME, "w", encoding="utf-8") as f:
         json.dump(extracted_logic, f, indent=2, ensure_ascii=False)

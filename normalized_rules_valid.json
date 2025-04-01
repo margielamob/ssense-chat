@@ -71,7 +71,7 @@
           "conditions": {
             "type": "state",
             "required": [
-              "unworn",
+              "unused",
               "tags_attached",
               "original_packaging"
             ]
@@ -120,10 +120,10 @@
           "conditions": {
             "type": "state",
             "required": [
-              "unworn",
+              "unused",
               "unaltered",
-              "unwashed",
-              "unmarked",
+              "unused",
+              "undamaged",
               "undamaged"
             ]
           }
@@ -172,39 +172,6 @@
     }
   },
   {
-    "sentence": "Final Sale items and shipping fees are not eligible for return/refund.",
-    "logic": {
-      "rules": [
-        {
-          "rule": "finalSale",
-          "conditions": {
-            "type": "restriction",
-            "category": "final_sale"
-          }
-        },
-        {
-          "rule": "eligibility",
-          "conditions": {
-            "type": "exclusion",
-            "items": [
-              "shipping_fees"
-            ]
-          }
-        },
-        {
-          "rule": "refund",
-          "conditions": {
-            "type": "exclusion",
-            "items": [
-              "final_sale",
-              "shipping_fees"
-            ]
-          }
-        }
-      ]
-    }
-  },
-  {
     "sentence": "Face masks: In the interest of hygiene, face masks and face coverings are considered Final Sale.",
     "logic": {
       "rules": [
@@ -228,7 +195,7 @@
           "conditions": {
             "type": "state",
             "required": [
-              "unworn",
+              "unused",
               "hygienic_protection_sticker_intact"
             ]
           }
@@ -449,7 +416,7 @@
         {
           "rule": "returnShipping",
           "conditions": {
-            "type": "address",
+            "type": "location",
             "destination": "original_shipping_address",
             "condition": "item_rejected"
           }
@@ -536,7 +503,7 @@
         {
           "rule": "warranty",
           "conditions": {
-            "type": "manufacturer",
+            "type": "provider",
             "applicability": "if_applicable"
           }
         }
@@ -564,7 +531,7 @@
         {
           "rule": "disclaimer",
           "conditions": {
-            "type": "legal",
+            "type": "policy",
             "scope": "warranties_and_conditions",
             "applicability": "where_permitted_by_law"
           }
@@ -635,7 +602,7 @@
         {
           "rule": "compliance",
           "conditions": {
-            "type": "policy_adherence",
+            "type": "policy",
             "consequence": "rejection"
           }
         }
@@ -795,11 +762,6 @@
     }
   },
   {
-    "sentence": "Customers receive free shipping for returns.",
-    "error": "The read operation timed out",
-    "error_type": "GeneralError - ReadTimeout"
-  },
-  {
     "sentence": "Please follow this step-by-step guide to initiate a return request:",
     "logic": {
       "rules": [
@@ -818,7 +780,7 @@
     }
   },
   {
-    "sentence": "Step 1 - Access your ‘Order History’ from your account page.",
+    "sentence": "Step 1 - Access your \u2018Order History\u2019 from your account page.",
     "logic": {
       "rules": [
         {
@@ -832,7 +794,7 @@
     }
   },
   {
-    "sentence": "Step 2 - Click on “Return Order” to request a prepaid return label (PPL).",
+    "sentence": "Step 2 - Click on \u201cReturn Order\u201d to request a prepaid return label (PPL).",
     "logic": {
       "rules": [
         {
@@ -884,30 +846,6 @@
     }
   },
   {
-    "sentence": "We will email customers a prepaid return label (PPL) to return their orders, and a Return Transportation Fee (Return Fee), applicable per package received, will be deducted from the refund amount.",
-    "logic": {
-      "rules": [
-        {
-          "rule": "returnLabel",
-          "conditions": {
-            "type": "provision",
-            "method": "email",
-            "labelType": "prepaid"
-          }
-        },
-        {
-          "rule": "returnFee",
-          "conditions": {
-            "type": "deduction",
-            "feeType": "transportation",
-            "basis": "per_package",
-            "deductionFrom": "refund"
-          }
-        }
-      ]
-    }
-  },
-  {
     "sentence": "The Return Transportation Fee (Return Fee) is based on the country from which the return is being shipped, as below:",
     "logic": {
       "rules": [
@@ -922,7 +860,7 @@
     }
   },
   {
-    "sentence": "Australia : $60 AUDChina : $50 USDHong Kong : $375 HKDSouth Korea : $60 USDUnited Kingdom : £34",
+    "sentence": "Australia : $60 AUDChina : $50 USDHong Kong : $375 HKDSouth Korea : $60 USDUnited Kingdom : \u00a334",
     "logic": {
       "rules": [
         {
@@ -934,7 +872,7 @@
               "China": "50 USD",
               "Hong Kong": "375 HKD",
               "South Korea": "60 USD",
-              "United Kingdom": "£34"
+              "United Kingdom": "\u00a334"
             }
           }
         }
@@ -960,7 +898,7 @@
     }
   },
   {
-    "sentence": "Step 1 - Access your ‘Order History’ from your account page.",
+    "sentence": "Step 1 - Access your \u2018Order History\u2019 from your account page.",
     "logic": {
       "rules": [
         {
@@ -974,7 +912,7 @@
     }
   },
   {
-    "sentence": "Step 2 - Click on “Return Order” to request a prepaid return label (PPL).",
+    "sentence": "Step 2 - Click on \u201cReturn Order\u201d to request a prepaid return label (PPL).",
     "logic": {
       "rules": [
         {
@@ -1004,11 +942,6 @@
         }
       ]
     }
-  },
-  {
-    "sentence": "Step 4 - Print the label and carefully follow the instructions.",
-    "error": "The read operation timed out",
-    "error_type": "GeneralError - ReadTimeout"
   },
   {
     "sentence": "International Returns",
@@ -1058,12 +991,7 @@
     }
   },
   {
-    "sentence": "Please follow this step-by-step guide to initiate a return authorization:",
-    "error": "The read operation timed out",
-    "error_type": "GeneralError - ReadTimeout"
-  },
-  {
-    "sentence": "Step 1 - Log in to your SSENSE account and access your ‘Order History.’",
+    "sentence": "Step 1 - Log in to your SSENSE account and access your \u2018Order History.\u2019",
     "logic": {
       "rules": [
         {
@@ -1077,7 +1005,7 @@
     }
   },
   {
-    "sentence": "Step 2 -  Click on “Return Order” to request a return authorization (RA).",
+    "sentence": "Step 2 -\u00a0 Click on \u201cReturn Order\u201d to request a return authorization (RA).",
     "logic": {
       "rules": [
         {
@@ -1121,27 +1049,6 @@
     }
   },
   {
-    "sentence": "Please ship returning international packages with your country/region’s local shipping carrier and be sure to use standard shipping.",
-    "logic": {
-      "rules": [
-        {
-          "rule": "shippingCarrier",
-          "conditions": {
-            "type": "carrier",
-            "requirement": "local"
-          }
-        },
-        {
-          "rule": "shippingMethod",
-          "conditions": {
-            "type": "method",
-            "required": "standard"
-          }
-        }
-      ]
-    }
-  },
-  {
     "sentence": "For added safety, please insure all packages with a tracking number.",
     "logic": {
       "rules": [
@@ -1179,37 +1086,6 @@
             "type": "payment",
             "method": "original_payment",
             "condition": "quality_check_passed"
-          }
-        }
-      ]
-    }
-  },
-  {
-    "sentence": "Please note that it can take up to 5 business days to process the refund.",
-    "logic": {
-      "rules": [
-        {
-          "rule": "refundProcessingTime",
-          "conditions": {
-            "type": "time",
-            "duration": "5 business days",
-            "action": "process refund"
-          }
-        }
-      ]
-    }
-  },
-  {
-    "sentence": "It may take your financial institution additional time to process the transaction and update your bank statement.",
-    "logic": {
-      "rules": [
-        {
-          "rule": "refund",
-          "conditions": {
-            "type": "processing_time",
-            "institution": "financial_institution",
-            "transaction_type": "refund",
-            "statement_update": "bank_statement"
           }
         }
       ]
@@ -1315,27 +1191,13 @@
         {
           "rule": "contact",
           "conditions": {
-            "type": "phone",
+            "type": "communication",
             "numbers": {
               "toll_free": "1-877-637-6002",
               "local": "1-514-600-5818",
               "quebec": "1-514-700-2078"
             },
             "region": "North America"
-          }
-        }
-      ]
-    }
-  },
-  {
-    "sentence": "Chat:\n        24/7",
-    "logic": {
-      "rules": [
-        {
-          "rule": "supportAvailability",
-          "conditions": {
-            "type": "time",
-            "availability": "24/7"
           }
         }
       ]
@@ -1356,7 +1218,7 @@
         {
           "rule": "personalizedReminders",
           "conditions": {
-            "type": "notification",
+            "type": "communication",
             "content": "shopping_reminders",
             "context": [
               "wishlist",
@@ -1394,5 +1256,118 @@
         }
       ]
     }
+  },
+  {
+    "sentence": "We will email customers a prepaid return label (PPL) to return their orders, and a Return Transportation Fee (Return Fee), applicable per package received, will be deducted from the refund amount.",
+    "logic": {
+      "rules": [
+        {
+          "rule": "returnLabel",
+          "conditions": {
+            "type": "action",
+            "method": "email",
+            "labelType": "prepaid"
+          }
+        },
+        {
+          "rule": "returnFee",
+          "conditions": {
+            "type": "deduction",
+            "feeType": "transportation",
+            "deductionFrom": "refund",
+            "frequency": "per_package"
+          }
+        }
+      ]
+    },
+    "validation_errors": [
+      "Schema error at ['logic', 'rules', 1, 'conditions', 'basis']: 'per_package' is not one of ['delivery', 'purchase', 'shipping_country', 'order_associated_email']"
+    ]
+  },
+  {
+    "sentence": "Please ship returning international packages with your country/region\u2019s local shipping carrier and be sure to use standard shipping.",
+    "logic": {
+      "rules": [
+        {
+          "rule": "shippingCarrier",
+          "conditions": {
+            "type": "carrier",
+            "requirement": "local"
+          }
+        },
+        {
+          "rule": "shippingMethod",
+          "conditions": {
+            "type": "method",
+            "required": [
+              "standard"
+            ]
+          }
+        }
+      ]
+    },
+    "validation_errors": [
+      "Schema error at ['logic', 'rules', 1, 'conditions', 'required']: 'standard' is not of type 'array'"
+    ]
+  },
+  {
+    "sentence": "Please note that it can take up to 5 business days to process the refund.",
+    "logic": {
+      "rules": [
+        {
+          "rule": "refundProcessingTime",
+          "conditions": {
+            "type": "time",
+            "duration": "5 business days",
+            "action": "process refund",
+            "days": 5,
+            "basis": "delivery"
+          }
+        }
+      ]
+    },
+    "validation_errors": [
+      "Custom error: time-based rule missing 'days'",
+      "Custom error: time-based rule missing 'basis'"
+    ]
+  },
+  {
+    "sentence": "It may take your financial institution additional time to process the transaction and update your bank statement.",
+    "logic": {
+      "rules": [
+        {
+          "rule": "refund",
+          "conditions": {
+            "type": "payment",
+            "institution": "financial_institution",
+            "transaction_type": "refund",
+            "statement_update": "bank_statement"
+          }
+        }
+      ]
+    },
+    "validation_errors": [
+      "Custom error: refund rule must have conditions.type='payment'"
+    ]
+  },
+  {
+    "sentence": "Chat:\n        24/7",
+    "logic": {
+      "rules": [
+        {
+          "rule": "supportAvailability",
+          "conditions": {
+            "type": "time",
+            "availability": "24/7",
+            "days": 5,
+            "basis": "delivery"
+          }
+        }
+      ]
+    },
+    "validation_errors": [
+      "Custom error: time-based rule missing 'days'",
+      "Custom error: time-based rule missing 'basis'"
+    ]
   }
 ]
