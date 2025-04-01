@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import json
 
 url = "https://www.ssense.com/en-ca/customer-service/return-policy"
 headers = {
@@ -16,5 +17,7 @@ for para in raw_paragraphs:
     split_sents = re.split(r'(?<=\.)\s+(?=[A-Z])', para)
     cleaned_sentences.extend([s.strip() for s in split_sents if s.strip()])
 
-for idx, sentence in enumerate(cleaned_sentences):
-    print(f"[{idx+1}] {sentence}")
+with open("cleaned_sentences.json", "w", encoding="utf-8") as f:
+    json.dump(cleaned_sentences, f, indent=2, ensure_ascii=False)
+
+print(f"✅ Extracted {len(cleaned_sentences)} sentences and saved to cleaned_sentences.json")
