@@ -1,4 +1,5 @@
-% Optimized SSENSE Return Policy - Prolog Knowledge Base (Revised Logic v4 - Fixed + LLM Helpers)
+% Optimized SSENSE Return Policy - Prolog Knowledge Base (Cleaned v1)
+% Removed conflicting decide/2 and reason_about_return/2 rules from the end.
 
 % --- Directives ---
 :- discontiguous(instance/2).
@@ -32,10 +33,10 @@
 :- discontiguous(contact_method/3).
 :- discontiguous(phone_details/4).
 :- discontiguous(return_option/2).
-:- discontiguous(is_eligible/5). % Added for is_eligible itself
-:- discontiguous(check_category_specific_rules/4). % Added for the helper
+:- discontiguous(is_eligible/5).
+:- discontiguous(check_category_specific_rules/4).
 
-% Directives for new LLM Helper Predicates
+% Directives for LLM Helper Predicates
 :- discontiguous(get_return_window/1).
 :- discontiguous(get_shipping_cost/2).
 :- discontiguous(get_return_label_info/2).
@@ -84,7 +85,7 @@ initiation_method(req, account_holder, via_order_history).
 initiation_method(req, guest, create_account_same_email).
 initiation_method(req, guest, use_self_service_tool).
 initiation_method(req, guest, contact_customer_care).
-initiation_method(req, general, contact_customer_care). % Note: general might be useful if user type unknown
+initiation_method(req, general, contact_customer_care).
 
 has_attribute(req, authorization_required, true).
 authorization_type(req, ppl).
@@ -134,8 +135,8 @@ rule_definition(rule_hygienic_sticker_intact, requires_state(item, not_worn)).
 
 applies_rule(crit, self_care, rule_sealed_original_packaging).
 applies_rule(crit, sexual_wellness_non_toy, rule_sealed_original_packaging).
-applies_rule(crit, technology_if_sealed, rule_sealed_original_packaging). % Assuming applies to 'technology'
-rule_definition(rule_sealed_original_packaging, requires_state(item, sealed)). % Key state
+applies_rule(crit, technology_if_sealed, rule_sealed_original_packaging).
+rule_definition(rule_sealed_original_packaging, requires_state(item, sealed)).
 
 applies_rule(crit, technology, rule_include_manuals_accessories).
 rule_definition(rule_include_manuals_accessories, requires_included(manuals)).
@@ -233,7 +234,7 @@ action_on_abuse(rights, cancel_future_orders).
 % --- Entity: Customer Care ---
 instance(cc, customer_care).
 contact_method(cc, email, 'customercare@ssense.com').
-contact_method(cc, phone, details(see_below)). % Keep original for context if needed
+contact_method(cc, phone, details(see_below)).
 contact_method(cc, chat, availability('24/7')).
 
 phone_details(cc, north_america_toll_free, '1-877-637-6002', hours('Mon-Fri 9AM-8PM EST, Sat 9AM-5PM EST')).
@@ -247,264 +248,116 @@ return_option(guest_pol, use_online_self_service_tool).
 return_option(guest_pol, contact_customer_care).
 
 
-% --- Core Eligibility Logic (Internal - Keep as is) ---
-
-% is_eligible/5 checks the main criteria for return eligibility.
-% LLM should target this directly when *all* details are potentially available.
+% --- Core Eligibility Logic ---
+% Main predicate for checking eligibility.
 is_eligible(ItemType, Condition, Packaging, Tags, DaysSinceDelivery) :-
-    get_return_window(MaxDays), % Use helper internally for consistency
+    get_return_window(MaxDays),
     DaysSinceDelivery =< MaxDays,
-    \+ is_item_excluded(ItemType, _), % Use helper internally
+    \+ is_item_excluded(ItemType, _), % Use helper to check exclusion
     requires(crit, item_condition, RequiredCondition),
-    Condition == RequiredCondition, % e.g., Condition = original
-    requires(crit, item_packaging, RequiredPackaging), % e.g., RequiredPackaging = original_intact
+    Condition == RequiredCondition,
+    requires(crit, item_packaging, RequiredPackaging),
     ( Packaging == sealed -> % Handle 'sealed' as a valid override if applicable
         member(ItemType, [self_care, sexual_wellness_non_toy, technology_if_sealed])
       ;
         Packaging == RequiredPackaging % Check against general requirement otherwise
     ),
-    requires(crit, ssense_security_tag_condition, RequiredTagState), % e.g., RequiredTagState = intact
+    requires(crit, ssense_security_tag_condition, RequiredTagState),
     ( Tags == RequiredTagState ; Tags == hygienic_sticker_intact ), % Allow general intact OR specific sticker state
-    !, % Cut optimization
+    !, % Optimization cut
     check_category_specific_rules(ItemType, Condition, Packaging, Tags). % Check category specifics
 
-% check_category_specific_rules/4 remains an internal helper for is_eligible/5
-% ... (rest of check_category_specific_rules clauses remain unchanged) ...
-% Special case for self_care items with sealed packaging
+% Internal helper for category-specific rules.
 check_category_specific_rules(self_care, _Condition, sealed, _Tags) :- !.
-% Special case for sexual_wellness_non_toy items with sealed packaging
 check_category_specific_rules(sexual_wellness_non_toy, _Condition, sealed, _Tags) :- !.
-% Special case for technology_if_sealed items with sealed packaging
 check_category_specific_rules(technology_if_sealed, _Condition, sealed, _Tags) :- !.
-% Special case for swimwear with hygienic sticker
 check_category_specific_rules(swimwear, _Condition, _Packaging, hygienic_sticker_intact) :- !.
-% Special case for intimate_apparel with hygienic sticker
 check_category_specific_rules(intimate_apparel, _Condition, _Packaging, hygienic_sticker_intact) :- !.
-% General case: Check for items with sealed packaging rule
 check_category_specific_rules(ItemType, _Condition, Packaging, _Tags) :-
     applies_rule(crit, ItemType, rule_sealed_original_packaging), !, Packaging == sealed.
-% General case: Check for hygiene sticker rule
 check_category_specific_rules(ItemType, _Condition, _Packaging, Tags) :-
     applies_rule(crit, ItemType, rule_hygienic_sticker_intact), !, Tags == hygienic_sticker_intact.
-% Technology items require manuals and accessories
 check_category_specific_rules(technology, _Condition, _Packaging, _Tags) :-
-    applies_rule(crit, technology, rule_include_manuals_accessories), !, true. % Placeholder - assumes checked elsewhere
-% Default case: No specific rule applies
+    applies_rule(crit, technology, rule_include_manuals_accessories), !, true. % Placeholder
 check_category_specific_rules(ItemType, _Condition, _Packaging, _Tags) :-
-    \+ applies_rule(crit, ItemType, _).
+    \+ applies_rule(crit, ItemType, _). % Default: passes if no specific rule applies
+
 
 % --- LLM Helper Predicates ---
-% These predicates provide a simplified interface for the LLM.
+% Simplified interface for LLM interaction.
 
-% What is the return window duration?
+% Gets the return window duration in days.
 get_return_window(Days) :-
     instance(req, return_request),
     has_attribute(req, request_window_duration, Days).
 
-% What is the return shipping cost for a region?
+% Gets the return shipping cost type for a region.
 % Region atoms: canada, usa, japan, australia, china, hong_kong, south_korea, uk, other_international
 % CostType atoms: free, fee_deducted, customer_pays
 get_shipping_cost(Region, CostType) :-
     shipping_cost(ship, region(Region), CostType).
 
-% How is the return label provided for a region?
+% Gets how the return label is provided for a region.
 % LabelInfo atoms: ppl_via_email, ra_number_via_email
 get_return_label_info(Region, LabelInfo) :-
     label_provided(ship, region(Region), LabelInfo).
 
-% What is the return fee for a region (if applicable)?
-% Succeeds only if a specific fee amount is defined for the region.
+% Gets the return fee amount and currency for a region (if applicable).
+% Succeeds only if a specific fee amount is defined.
 get_return_fee(Region, Amount, Currency) :-
     return_fee(ship, region(Region), amount(Amount, Currency)).
 
-% Is a specific item type excluded from returns?
+% Checks if an item type is excluded and returns the reason structure.
 % ItemType atoms: final_sale_item, face_mask, face_covering, sexual_wellness_toy, dangerous_good
-% MODIFIED: Returns the full reason/exclusion structure found in the KB
 is_item_excluded(ItemType, ReasonStructure) :-
-    % We assume 'excl' is the constant instance name for exclusion rules based on KB structure
     excluded_item_type(excl, ItemType, ReasonStructure).
 
-% How can a user initiate a return?
+% Gets the return initiation method(s) for a user type.
 % UserType atoms: account_holder, guest, general
 % Method atoms: via_order_history, create_account_same_email, use_self_service_tool, contact_customer_care
 get_initiation_method(UserType, Method) :-
     instance(req, return_request),
     initiation_method(req, UserType, Method).
 
-% Can items be directly exchanged?
+% Checks if direct exchanges are offered.
 % Result atoms: true, false
 can_exchange(Result) :-
     instance(exch, exchange_policy),
     has_attribute(exch, direct_exchange_offered, Result).
 
-% What is the customer care email?
+% Gets the customer care email address.
 get_contact_email(Email) :-
     instance(cc, customer_care),
     contact_method(cc, email, Email).
 
-% What is the availability of chat support?
+% Gets the availability of chat support.
 get_contact_chat_availability(Availability) :-
     instance(cc, customer_care),
-    contact_method(cc, chat, availability(Availability)). % Assuming format is availability(...)
+    contact_method(cc, chat, availability(Availability)).
 
-% Get specific phone number details.
+% Gets specific phone number details.
 % PhoneType atoms: north_america_toll_free, local, quebec
 get_phone_number(PhoneType, Number, Hours) :-
     instance(cc, customer_care),
-    phone_details(cc, PhoneType, Number, hours(Hours)). % Assuming format is hours(...)
+    phone_details(cc, PhoneType, Number, hours(Hours)).
 
-% What should a customer do if an item is damaged/defective?
+% Gets the required action for damaged/defective items.
 % Action atoms: contact_customer_care
 get_damaged_item_action(Action) :-
     instance(dmg, damaged_defective_policy),
     required_action(dmg, customer, Action).
 
-% Who provides the warranty?
+% Gets the warranty provider.
 % Provider atoms: manufacturer
 get_warranty_provider(Provider) :-
     instance(warr, warranty_policy),
     has_attribute(warr, provider, Provider).
 
-% Does SSENSE provide the warranty?
+% Checks if SSENSE provides the warranty.
 % Result atoms: true, false
 is_warranty_by_ssense(Result) :-
     instance(warr, warranty_policy),
     has_attribute(warr, provided_by_ssense, Result).
 
-% --- Wrapper Predicates for LLM Compatibility (Arity-Extended) ---
+% --- End of Cleaned Knowledge Base ---
 
-% is_eligible/6
-is_eligible(ItemType, Condition, Packaging, Tags, Days, true) :-
-    is_eligible(ItemType, Condition, Packaging, Tags, Days), !.
-is_eligible(_, _, _, _, _, false).
-
-% get_return_window/2
-get_return_window(Days, true) :-
-    get_return_window(Days), !.
-get_return_window(_, false).
-
-% get_shipping_cost/3
-get_shipping_cost(Region, Cost, true) :-
-    get_shipping_cost(Region, Cost), !.
-get_shipping_cost(_, _, false).
-
-% get_return_fee/4
-get_return_fee(Region, Amount, Currency, true) :-
-    get_return_fee(Region, Amount, Currency), !.
-get_return_fee(_, _, _, false).
-
-% is_item_excluded/3
-is_item_excluded(ItemType, Reason, true) :-
-    is_item_excluded(ItemType, Reason), !.
-is_item_excluded(_, _, false).
-
-is_within_return_window(Days, true) :- Days =< 30.
-is_within_return_window(Days, false) :- Days > 30.
-
-is_within_return_window(Days) :-
-    get_return_window(Max), Days =< Max.
-
-% ========================
-% --- Decision Reasoning ---
-% ========================
-
-% Entry point: symbolic reasoning over user-provided facts
-% Facts: list of structured input (e.g., item_type(...), days_since_delivery(...))
-% Decision: one of return_allowed | return_denied(reason(...)) | unknown
-
-decide(Facts, Decision) :-
-    reason_about_return(Facts, Decision), !.
-decide(_, unknown("Unable to determine based on provided facts.")).
-
-% --- Reasoning rules ---
-
-% 1. Item type is excluded
-reason_about_return(Facts, return_denied(reason(excluded_item_type, ItemType))) :-
-    member(item_type(ItemType), Facts),
-    is_item_excluded(ItemType, _), !.
-
-% 2. Return window exceeded
-reason_about_return(Facts, return_denied(reason(outside_return_window, Days))) :-
-    member(days_since_delivery(Days), Facts),
-    \+ is_within_return_window(Days), !.
-
-% 3. Item not in original condition
-reason_about_return(Facts, return_denied(reason(not_original_condition))) :-
-    member(item_condition(Condition), Facts),
-    requires(crit, item_condition, Required),
-    Condition \= Required, !.
-
-% 4. Packaging not intact
-reason_about_return(Facts, return_denied(reason(packaging_not_intact))) :-
-    member(item_packaging(Packaging), Facts),
-    requires(crit, item_packaging, Required),
-    Packaging \= Required, !.
-
-% 5. Tag removed or damaged
-reason_about_return(Facts, return_denied(reason(tag_removed))) :-
-    member(tag_condition(Tag), Facts),
-    requires(crit, ssense_security_tag_condition, Required),
-    Tag \= Required, !.
-
-% 6. Passes all checks
-reason_about_return(Facts, return_allowed) :-
-    member(item_type(ItemType), Facts),
-    member(item_condition(Condition), Facts),
-    member(item_packaging(Packaging), Facts),
-    member(tag_condition(Tags), Facts),
-    member(days_since_delivery(Days), Facts),
-    is_eligible(ItemType, Condition, Packaging, Tags, Days), !.
-
-% --- Optional explanation mappings for NLG ---
-decision_message(return_allowed, "You're eligible to return this item.").
-
-decision_message(return_denied(reason(excluded_item_type, T)), Msg) :-
-    format(atom(Msg), "Items of type ~w are excluded from returns.", [T]).
-
-decision_message(return_denied(reason(outside_return_window, D)), Msg) :-
-    format(atom(Msg), "It's been ~w days since delivery, which exceeds the return window.", [D]).
-
-decision_message(return_denied(reason(not_original_condition)), "The item is not in its original condition and cannot be returned.").
-
-decision_message(return_denied(reason(packaging_not_intact)), "The original packaging must be intact to qualify for a return.").
-
-decision_message(return_denied(reason(tag_removed)), "The SSENSE security tag must be intact to process a return.").
-
-decision_message(unknown(Reason), Msg) :-
-    format(atom(Msg), "We couldn't make a decision: ~w", [Reason]).
-
-% --- Decision Rule Interface ---
-% Takes a list of facts and deduces Result = true or false.
-decide(Facts, Result) :-
-    include(ground_fact, Facts, Grounded),        % Ensure all terms are grounded
-    maplist(assertz_if_new, Grounded),            % Assert temporary facts
-    (
-        extract_decision_params(ItemType, Condition, Packaging, Tags, Days),
-        is_eligible(ItemType, Condition, Packaging, Tags, Days)
-        -> Result = true
-        ;  Result = false
-    ),
-    retract_all(Grounded).                        % Clean up temporary facts
-
-% Helper to ensure only facts (not meta terms) are passed
-ground_fact(Fact) :- ground(Fact).
-
-% Helper to avoid duplicate fact assertion
-assertz_if_new(Fact) :-
-    \+ call(Fact), assertz(Fact), !.
-assertz_if_new(_). % already exists
-
-% Extracts known facts into variables for is_eligible/5
-extract_decision_params(ItemType, Condition, Packaging, Tags, Days) :-
-    item_type(ItemType),
-    item_condition(Condition),
-    item_packaging(Packaging),
-    tag_condition(Tags),
-    days_since_delivery(Days).
-
-% Cleanup
-retract_all([]).
-retract_all([H|T]) :- retractall(H), retract_all(T).
-
-
-% --- End of Knowledge Base ---

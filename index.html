@@ -185,6 +185,18 @@ body {
   border-radius: 16px;
   padding: 8px 12px;
 }
+.meme-container {
+  position: fixed;
+  left: 25%; /* Position at 25% of screen width (middle of left half) */
+  top: 50%;
+  transform: translate(-50%, -50%); /* Center both horizontally and vertically */
+  z-index: 998;
+}
+.meme-container img {
+  max-width: 600px;
+  height: auto;
+  display: block;
+}
 </style>
 </head>
 <body>
@@ -204,6 +216,10 @@ body {
     <div>Wishlist</div>
     <div>Bag (0)</div>
   </div>
+</div>
+
+<div class="meme-container">
+  <img src="./ssense_meme.png" alt="SSENSE Meme" id="memeImage">
 </div>
 
 <!-- CHAT BUTTON -->
