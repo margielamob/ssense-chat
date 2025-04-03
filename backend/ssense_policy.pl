@@ -1,5 +1,4 @@
 % Optimized SSENSE Return Policy - Prolog Knowledge Base (Cleaned v1)
-% Removed conflicting decide/2 and reason_about_return/2 rules from the end.
 
 % --- Directives ---
 :- discontiguous(instance/2).

@@ -1,267 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<title>SSENSE Chatbot Demo</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<style>
-body {
-  margin: 0;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 12px;
-  color: #000;
-  background: #fff;
-}
-/* --- HEADER --- */
-.header {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 40px;
-  text-transform: uppercase;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-.nav-left, .nav-right {
-  display: flex;
-  gap: 20px;
-}
-.nav-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 13px;
-  font-weight: bold;
-  pointer-events: none;
-}
-/* --- CHAT BUTTON --- */
-.chat-button {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: white;
-  color: black;
-  border: 1px solid black;
-  border-radius: 4px;
-  padding: 10px 16px;
-  cursor: pointer;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  z-index: 1000;
-}
-/* --- CHAT BOX --- */
-.chat-box {
-  position: fixed;
-  bottom: 80px;
-  right: 24px;
-  width: 360px;
-  height: 420px;
-  background-color: white;
-  border: 1px solid #ccc;
-  box-shadow: 0px 4px 20px rgba(0,0,0,0.1);
-  display: none; /* hidden by default */
-  flex-direction: column;
-  z-index: 999;
-  overflow: hidden;
-}
-.chat-header {
-  font-size: 13px;
-  font-weight: bold;
-  padding: 16px;
-  border-bottom: 1px solid #eee;
-}
-.chat-body {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-  font-size: 12px;
-  box-sizing: border-box;
-}
-.chat-input {
-  border-top: 1px solid #eee;
-  padding: 12px;
-}
-.chat-input form {
-  display: flex;
-  width: 100%;
-}
-.chat-input input {
-  flex: 1;
-  padding: 10px;
-  font-size: 12px;
-  border: 1px solid #ccc;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-.chat-input button {
-  padding: 10px 12px;
-  background-color: black;
-  color: white;
-  border: none;
-  cursor: pointer;
-  margin-left: 8px;
-}
-.message {
-  margin-bottom: 12px;
-}
-.user-message {
-  text-align: right;
-}
-.bot-message {
-  text-align: left;
-}
-.message-bubble {
-  display: inline-block;
-  max-width: 80%;
-  padding: 8px 12px;
-  border-radius: 16px;
-  margin-top: 4px;
-}
-.user-bubble {
-  background-color: #f0f0f0;
-}
-.bot-bubble {
-  background-color: #e6e6fa;
-}
-.typing-indicator {
-  display: none;
-  text-align: left;
-  margin-bottom: 12px;
-}
-.typing-indicator span {
-  display: inline-block;
-  height: 8px;
-  width: 8px;
-  border-radius: 50%;
-  background-color: #888;
-  margin-right: 3px;
-  animation: typing 1s infinite ease-in-out;
-}
-.typing-indicator span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.typing-indicator span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-@keyframes typing {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-  100% { transform: translateY(0); }
-}
-/* Status indicator for API connection */
-.api-status {
-  position: fixed;
-  bottom: 8px;
-  left: 8px;
-  font-size: 10px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background-color: #f0f0f0;
-  color: #666;
-  z-index: 1000;
-}
-.api-status.connected {
-  background-color: #dfd;
-  color: #060;
-}
-.api-status.disconnected {
-  background-color: #fdd;
-  color: #600;
-}
-/* Error message style */
-.error-message {
-  color: #721c24;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  border-radius: 16px;
-  padding: 8px 12px;
-}
-.meme-container {
-  position: fixed;
-  left: 25%; /* Position at 25% of screen width (middle of left half) */
-  top: 50%;
-  transform: translate(-50%, -50%); /* Center both horizontally and vertically */
-  z-index: 998;
-}
-.meme-container img {
-  max-width: 600px;
-  height: auto;
-  display: block;
-}
-</style>
-</head>
-<body>
-<!-- HEADER -->
-<div class="header">
-  <div class="nav-left">
-    <div>Menswear</div>
-    <div>Womenswear</div>
-    <div>Everything Else</div>
-    <div>Sale</div>
-    <div>Search</div>
-  </div>
-  <div class="nav-center">SSENSE</div>
-  <div class="nav-right">
-    <div>English</div>
-    <div>Login</div>
-    <div>Wishlist</div>
-    <div>Bag (0)</div>
-  </div>
-</div>
-
-<div class="meme-container">
-  <img src="./ssense_meme.png" alt="SSENSE Meme" id="memeImage">
-</div>
-
-<!-- CHAT BUTTON -->
-<button class="chat-button" onclick="toggleChat()">Chat</button>
-
-<!-- CHAT BOX -->
-<div class="chat-box" id="chatBox">
-  <div class="chat-header">Ask about returns</div>
-  <div class="chat-body">
-    <div class="chat-messages" id="chatMessages">
-      <!-- Initial welcome message will be loaded from server on chat open -->
-    </div>
-    <div class="typing-indicator" id="typingIndicator">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-  </div>
-  <div class="chat-input">
-    <form id="chatForm" onsubmit="sendMessage(event)">
-      <input type="text" id="messageInput" placeholder="Type your question..." />
-      <button type="submit">Send</button>
-    </form>
-  </div>
-</div>
-
-<!-- API Status Indicator -->
-<div class="api-status" id="apiStatus">API: Checking...</div>
-
-<!-- JS -->
-<script>
-// API URL
 const API_URL = 'http://localhost:5001/api/chat';
 
-// Check API connection on load
 window.addEventListener('DOMContentLoaded', checkApiConnection);
 
 async function checkApiConnection() {
   const statusIndicator = document.getElementById('apiStatus');
   
   try {
-    // Test connection with a simple OPTIONS request
     const response = await fetch(API_URL, {
       method: 'OPTIONS',
       headers: {
@@ -275,7 +19,6 @@ async function checkApiConnection() {
       statusIndicator.textContent = 'API: Connected';
       statusIndicator.className = 'api-status connected';
       
-      // Load initial welcome message from server
       loadWelcomeMessage();
     } else {
       throw new Error('API responded with status: ' + response.status);
@@ -285,7 +28,6 @@ async function checkApiConnection() {
     statusIndicator.textContent = 'API: Disconnected';
     statusIndicator.className = 'api-status disconnected';
     
-    // Show connection error in chat
     const chatMessages = document.getElementById("chatMessages");
     chatMessages.innerHTML = `
       <div class="message bot-message">
@@ -296,13 +38,11 @@ async function checkApiConnection() {
     `;
   }
   
-  // Hide status after 5 seconds
   setTimeout(() => {
     statusIndicator.style.opacity = '0.6';
   }, 5000);
 }
 
-// Load welcome message from server
 async function loadWelcomeMessage() {
   try {
     const response = await fetch(`${API_URL}/welcome`, {
@@ -328,7 +68,6 @@ async function loadWelcomeMessage() {
     `;
   } catch (error) {
     console.error('Error loading welcome message:', error);
-    // If welcome message fails to load, display a basic greeting
     const chatMessages = document.getElementById("chatMessages");
     chatMessages.innerHTML = `
       <div class="message bot-message">
@@ -340,19 +79,15 @@ async function loadWelcomeMessage() {
   }
 }
 
-// Toggle chat visibility
 function toggleChat() {
   const chat = document.getElementById("chatBox");
   const messages = document.getElementById("chatMessages");
   
-  // Check if the chat is visible using computed style
   const computedStyle = window.getComputedStyle(chat);
   const isVisible = computedStyle.display !== "none";
   
-  // Toggle the display
   chat.style.display = isVisible ? "none" : "flex";
   
-  // Scroll to bottom when opening
   if (!isVisible) {
     requestAnimationFrame(() => {
       messages.scrollTop = messages.scrollHeight;
@@ -360,7 +95,6 @@ function toggleChat() {
   }
 }
 
-// Add a user message to the chat
 function addUserMessage(message) {
   const chatMessages = document.getElementById("chatMessages");
   const messageElement = document.createElement("div");
@@ -374,7 +108,6 @@ function addUserMessage(message) {
   scrollToBottom();
 }
 
-// Add a bot message to the chat
 function addBotMessage(message) {
   const chatMessages = document.getElementById("chatMessages");
   const messageElement = document.createElement("div");
@@ -388,7 +121,6 @@ function addBotMessage(message) {
   scrollToBottom();
 }
 
-// Add an error message to the chat
 function addErrorMessage(message) {
   const chatMessages = document.getElementById("chatMessages");
   const messageElement = document.createElement("div");
@@ -402,7 +134,6 @@ function addErrorMessage(message) {
   scrollToBottom();
 }
 
-// Escape HTML to prevent XSS
 function escapeHtml(unsafe) {
   return unsafe
     .replace(/&/g, "&amp;")
@@ -412,26 +143,22 @@ function escapeHtml(unsafe) {
     .replace(/'/g, "&#039;");
 }
 
-// Show typing indicator
 function showTypingIndicator() {
   const typingIndicator = document.getElementById("typingIndicator");
   typingIndicator.style.display = "block";
   scrollToBottom();
 }
 
-// Hide typing indicator
 function hideTypingIndicator() {
   const typingIndicator = document.getElementById("typingIndicator");
   typingIndicator.style.display = "none";
 }
 
-// Scroll chat to bottom
 function scrollToBottom() {
   const chatMessages = document.getElementById("chatMessages");
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// API call function
 async function callChatApi(message) {
   const response = await fetch(API_URL, {
     method: 'POST',
@@ -450,7 +177,6 @@ async function callChatApi(message) {
   return data.response;
 }
 
-// Send message function
 async function sendMessage(event) {
   event.preventDefault();
   
@@ -459,15 +185,12 @@ async function sendMessage(event) {
   
   if (userMessage === "") return;
   
-  // Add user message to chat
   addUserMessage(userMessage);
   messageInput.value = "";
   
-  // Show typing indicator
   showTypingIndicator();
   
   try {
-    // Call API with timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     
@@ -489,30 +212,22 @@ async function sendMessage(event) {
     
     const data = await response.json();
     
-    // Hide typing indicator
     hideTypingIndicator();
     
-    // Add bot response from server to chat
     addBotMessage(data.response);
   } catch (error) {
-    // Hide typing indicator
     hideTypingIndicator();
     
     console.error("Error sending message:", error);
     
-    // Show appropriate error message
     if (error.name === 'AbortError') {
       addErrorMessage("Our service is taking longer than expected to respond. Please try again or contact us directly at support@ssense.com.");
     } else {
       addErrorMessage("We're experiencing technical difficulties. Please try again later or email us at support@ssense.com.");
     }
     
-    // Update API status
     document.getElementById('apiStatus').textContent = 'API: Error';
     document.getElementById('apiStatus').className = 'api-status disconnected';
     document.getElementById('apiStatus').style.opacity = '1';
   }
 }
-</script>
-</body>
-</html>

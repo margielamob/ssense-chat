@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>SSENSE Chatbot Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="header">
+  <div class="nav-left">
+    <div>Menswear</div>
+    <div>Womenswear</div>
+    <div>Everything Else</div>
+    <div>Sale</div>
+    <div>Search</div>
+  </div>
+  <div class="nav-center">SSENSE</div>
+  <div class="nav-right">
+    <div>English</div>
+    <div>Login</div>
+    <div>Wishlist</div>
+    <div>Bag (0)</div>
+  </div>
+</div>
+
+<div class="meme-container">
+  <img src="./ssense_meme.png" alt="SSENSE Meme" id="memeImage">
+</div>
+
+<button class="chat-button" onclick="toggleChat()">Chat</button>
+
+<div class="chat-box" id="chatBox">
+  <div class="chat-header">Ask about returns</div>
+  <div class="chat-body">
+    <div class="chat-messages" id="chatMessages">
+      
+    </div>
+    <div class="typing-indicator" id="typingIndicator">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+  <div class="chat-input">
+    <form id="chatForm" onsubmit="sendMessage(event)">
+      <input type="text" id="messageInput" placeholder="Type your question..." />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+</div>
+
+<div class="api-status" id="apiStatus">API: Checking...</div>
+
+<script src="script.js"></script>
+</body>
+</html>
