@@ -2,6 +2,11 @@
 
 I extracted and translated SSENSE’s return policy into structured logical rules. This Natural Language to Logical Rules pipelines is still a work in progress. I then used this as a Prolog knowledge base to enable precise and automated **reasoning** about returns. It combines neural and symbolic methods to **accurately** answer customer questions. 
 
+<video autoplay loop muted playsinline>
+  <source src="demo.mov" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
+
 ## Relation with past works
 
 Previously, I built an AI chatbot for a real client, CentreDMV, as part of a final group project at school (GitHub repo). That chatbot utilized GPT-4 through OpenAI's API, and we reduced hallucinations by fine-tuning tool usage. However, it was not as robust or accurate as this neuro-symbolic AI approach.
