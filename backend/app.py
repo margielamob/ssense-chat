@@ -7,27 +7,26 @@ import logging
 import time
 from openai import OpenAI
 from dotenv import load_dotenv
-from pyswip import Prolog, Atom, Variable, Functor 
+from pyswip import Prolog, Atom, Variable, Functor
 
 KB_FILENAME = 'ssense_policy.pl'
-NLU_PROMPT_FILE = "nlu_prompt.txt" 
+NLU_PROMPT_FILE = "nlu_prompt.txt"
 NLG_PROMPT_FILE = "nlg_prompt.txt"
 LOG_FILE = "ssense_debug.log"
-ALLOWED_PREDICATES = [ 
+ALLOWED_PREDICATES = [
     'is_eligible', 'get_return_window', 'get_shipping_cost',
     'get_return_label_info', 'get_return_fee', 'is_item_excluded',
     'get_initiation_method', 'can_exchange', 'get_contact_email',
     'get_contact_chat_availability', 'get_phone_number',
     'get_damaged_item_action', 'get_warranty_provider', 'is_warranty_by_ssense'
 ]
-
 PREDICATE_OUTPUT_VARS = {
     'get_return_window': {1: 'Days'},
     'get_shipping_cost': {2: 'CostType'},
     'get_return_label_info': {2: 'LabelInfo'},
     'get_return_fee': {2: 'Amount', 3: 'Currency'},
     'is_item_excluded': {2: 'ReasonStructure'},
-    'get_initiation_method': {2: 'Method'}, 
+    'get_initiation_method': {2: 'Method'},
     'can_exchange': {1: 'Result'},
     'get_contact_email': {1: 'Email'},
     'get_contact_chat_availability': {1: 'Availability'},
@@ -35,9 +34,8 @@ PREDICATE_OUTPUT_VARS = {
     'get_damaged_item_action': {1: 'Action'},
     'get_warranty_provider': {1: 'Provider'},
     'is_warranty_by_ssense': {1: 'Result'},
-    'is_eligible': {} 
+    'is_eligible': {}
 }
-
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -47,27 +45,22 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("ssense_chatbot")
-
 app = Flask(__name__)
-
 CORS(app,
      resources={r"/api/*": {
-         "origins": ["http://localhost:*", "file://*", "null"], 
+         "origins": ["http://localhost:*", "file://*", "null"],
          "methods": ["GET", "POST", "OPTIONS"],
          "allow_headers": ["Content-Type", "Authorization"]
      }},
      supports_credentials=True)
-
 load_dotenv()
 logger.info("Environment variables loaded")
-
 try:
     client = OpenAI()
     logger.info("OpenAI client initialized")
 except Exception as e:
     logger.error(f"Error initializing OpenAI client: {e}", exc_info=True)
     raise
-
 try:
     with open(NLU_PROMPT_FILE) as f:
         nlu_prompt = f.read()
@@ -76,13 +69,10 @@ try:
     logger.info("Prompt files loaded successfully")
 except Exception as e:
     logger.error(f"Error loading prompt files from '{NLU_PROMPT_FILE}' or '{NLG_PROMPT_FILE}': {e}", exc_info=True)
-    
     raise
-
 try:
     prolog = Prolog()
     logger.info("Prolog engine initialized")
-    
     if not os.path.exists(KB_FILENAME):
         logger.error(f"Prolog KB file '{KB_FILENAME}' not found.")
         raise FileNotFoundError(f"Prolog KB file '{KB_FILENAME}' not found.")
@@ -91,8 +81,6 @@ try:
 except Exception as e:
     logger.error(f"Error initializing Prolog or loading KB: {e}", exc_info=True)
     raise
-
-
 def format_prolog_arg(value):
     """Formats a Python value into a Prolog-compatible string representation."""
     if isinstance(value, str):
@@ -100,13 +88,13 @@ def format_prolog_arg(value):
               return value
         else:
               escaped_value = value.replace("'", "''")
-              return f"'{escaped_value}'" 
+              return f"'{escaped_value}'"
     elif isinstance(value, bool):
-        return str(value).lower() 
+        return str(value).lower()
     elif isinstance(value, (int, float)):
         return str(value)
     elif value is None:
-         return '_' 
+         return '_'
     else:
         logger.warning(f"Unsupported type for Prolog formatting: {type(value)}. Using repr().")
         repr_value = repr(value)
@@ -114,7 +102,6 @@ def format_prolog_arg(value):
               escaped_repr = repr_value.replace("'", "''")
               return f"'{escaped_repr}'"
         return repr_value
-
 
 def construct_prolog_query(predicate_name, args_dict):
     """
@@ -124,7 +111,7 @@ def construct_prolog_query(predicate_name, args_dict):
     logger.debug(f"Constructing query for predicate: {predicate_name} with args: {args_dict}")
     if predicate_name not in ALLOWED_PREDICATES:
         raise ValueError(f"Predicate '{predicate_name}' is not allowed.")
-    
+
     input_arg_order_map = {
         'is_eligible': ['ItemType', 'Condition', 'Packaging', 'Tags', 'DaysSinceDelivery'],
         'get_return_window': [],
@@ -147,23 +134,23 @@ def construct_prolog_query(predicate_name, args_dict):
 
     positional_args_formatted = []
     input_arg_names = input_arg_order_map[predicate_name]
-    
+
     for arg_name in input_arg_names:
         if arg_name not in args_dict:
             logger.error(f"Missing required argument '{arg_name}' for predicate '{predicate_name}' in args: {args_dict}")
             raise ValueError(f"Internal Error: Missing required argument '{arg_name}' for predicate '{predicate_name}'.")
         formatted_arg = format_prolog_arg(args_dict[arg_name])
         positional_args_formatted.append(formatted_arg)
-    
+
     output_vars_map = PREDICATE_OUTPUT_VARS.get(predicate_name, {})
-    output_var_names = list(output_vars_map.values()) 
+    output_var_names = list(output_vars_map.values())
     total_arity = len(input_arg_names)
     if output_vars_map:
         max_output_pos = max(output_vars_map.keys()) if output_vars_map else 0
         total_arity = max(len(input_arg_names), max_output_pos)
 
     current_len = len(positional_args_formatted)
-    
+
     while current_len < total_arity:
         positional_args_formatted.append("_")
         current_len += 1
@@ -173,12 +160,11 @@ def construct_prolog_query(predicate_name, args_dict):
         if idx >= len(positional_args_formatted):
              logger.error(f"Output variable position {pos} out of calculated bounds {len(positional_args_formatted)} for {predicate_name}")
              raise ValueError(f"Internal configuration error for predicate {predicate_name}: PREDICATE_OUTPUT_VARS position mismatch.")
-        positional_args_formatted[idx] = var_name 
+        positional_args_formatted[idx] = var_name
 
     query_string = f"{predicate_name}({', '.join(positional_args_formatted)})."
     logger.debug(f"Constructed query string: {query_string}, Output vars: {output_var_names}")
     return query_string, output_var_names
-
 
 @app.route('/api/chat/welcome', methods=['GET'])
 def welcome_message():
@@ -203,6 +189,7 @@ def handle_options():
     response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
+
 
 @app.route('/api/chat', methods=['POST'])
 def process_message():
@@ -233,10 +220,10 @@ def process_message():
         messages_for_nlu.append({"role": "user", "content": user_question})
 
         nlu_response = client.chat.completions.create(
-            model="gpt-4o", 
+            model="gpt-4o",
             messages=messages_for_nlu,
-            temperature=0.1, 
-            response_format={"type": "json_object"} 
+            temperature=0.1,
+            response_format={"type": "json_object"}
         )
         raw_nlu_output = nlu_response.choices[0].message.content.strip()
         logger.debug(f"Raw NLU output: {raw_nlu_output}")
@@ -249,7 +236,7 @@ def process_message():
             return jsonify({
                 'response': "I'm having trouble understanding that. Could you please rephrase your question?",
                 'debug': {'error': 'NLU JSON Parsing Failed', 'raw_nlu': raw_nlu_output}
-            }), 200, headers 
+            }), 200, headers
 
         nlu_status = nlu_json.get("status")
         predicate_name = nlu_json.get("predicate")
@@ -257,19 +244,20 @@ def process_message():
 
         if nlu_status == "missing_info":
             clarification = nlu_json.get("clarification_question", "Could you please provide some more details?")
-            missing = nlu_json.get("missing_args", [])
-            logger.info(f"NLU status: missing_info. Missing args: {missing}. Sending clarification: {clarification}")
+            logger.info(f"NLU status: missing_info. Sending clarification: {clarification}")
             return jsonify({
                 'response': clarification,
+                'explanation': None, 
                 'debug': {'nlu': nlu_json}
             }), 200, headers
 
-        elif nlu_status == "off_topic": 
+        elif nlu_status == "off_topic":
             reason = nlu_json.get("off_topic_reason", "The question doesn't seem related to our return policy.")
             logger.info(f"NLU status: off_topic. Reason: {reason}. Generating canned response.")
             final_answer = "I can only help with questions about the SSENSE return policy. Could you ask something related to returns, please?"
             return jsonify({
                 'response': final_answer,
+                'explanation': None, 
                 'debug': {'nlu': nlu_json}
             }), 200, headers
 
@@ -290,16 +278,16 @@ def process_message():
                  return jsonify({'error': 'Internal error preparing KB query.'}), 500, headers
 
             try:
-                prolog_results_list = list(prolog.query(query_string)) 
+                prolog_results_list = list(prolog.query(query_string))
                 logger.debug(f"Raw Prolog results list: {prolog_results_list}")
             except Exception as prolog_err:
                  logger.error(f"Error executing Prolog query '{query_string}': {prolog_err}", exc_info=True)
                  return jsonify({'error': 'Internal error querying knowledge base.'}), 500, headers
 
             kb_result_data = {}
-            if prolog_results_list is None: 
+            if prolog_results_list is None:
                  kb_result_data["success"] = False
-                 kb_result_data["solutions"] = None 
+                 kb_result_data["solutions"] = None
                  kb_result_data["error"] = "Prolog query execution failed."
                  logger.error(f"Prolog query execution failed for: {query_string}")
             elif not prolog_results_list:
@@ -309,59 +297,55 @@ def process_message():
             else:
                 kb_result_data["success"] = True
                 solutions = []
-                if prolog_results_list == [{}]:
+                if prolog_results_list == [{}]: 
                       logger.info(f"Prolog query succeeded with no variable bindings for predicate {predicate_name}.")
-                      solutions.append({}) 
+                      solutions.append({})
                 else:
                       for solution in prolog_results_list:
                             py_solution = {}
                             for k, v in solution.items():
-                                if isinstance(v, Atom):
-                                    py_solution[k] = str(v).strip("'")
-                                elif isinstance(v, Functor) and v.arity == 0:
-                                    py_solution[k] = str(v).strip("'") 
-                                else:
-                                    py_solution[k] = v
+                                if isinstance(v, Atom): py_solution[k] = str(v).strip("'")
+                                elif isinstance(v, Functor) and v.arity == 0: py_solution[k] = str(v).strip("'")
+                                else: py_solution[k] = v
                             solutions.append(py_solution)
                       logger.info(f"Prolog query succeeded. Solutions processed: {solutions}")
                 kb_result_data["solutions"] = solutions
 
             explanation_string = None
-            if kb_result_data.get("success"):
-                try:
-                    exp_query = f"predicate_explanation({predicate_name}, _, Explanation)."
-                    explanation_results = list(prolog.query(exp_query))
-                    if explanation_results:
-                        explanation_raw = explanation_results[0].get('Explanation', None)
-                        if explanation_raw is not None:
-                             explanation_string = str(explanation_raw).strip("'") 
-                        logger.info(f"Retrieved explanation for {predicate_name}: {explanation_string}")
-                    else:
-                        logger.info(f"No explanation found for predicate: {predicate_name}")
-                except Exception as exp_err:
-                    logger.error(f"Error querying explanation for {predicate_name}: {exp_err}", exc_info=True)
+            try:
+                exp_query = f"predicate_explanation({predicate_name}, _, Explanation)."
+                explanation_results = list(prolog.query(exp_query))
+                if explanation_results:
+                    explanation_raw = explanation_results[0].get('Explanation', None)
+                    if explanation_raw is not None:
+                         explanation_string = str(explanation_raw).strip("'")
+                    logger.info(f"Retrieved explanation for {predicate_name}: {explanation_string}")
+                else:
+                    logger.info(f"No explanation found for predicate: {predicate_name}")
+            except Exception as exp_err:
+                logger.error(f"Error querying explanation for {predicate_name}: {exp_err}", exc_info=True)
 
             logger.info("Step 4: Preparing input for NLG LLM call")
             nlg_input_context = {
                 "user_question": user_question,
                 "kb_query": {
                     "predicate_called": predicate_name,
-                    "args_provided": args_dict, 
-                    "query_string": query_string, 
-                    "result": kb_result_data 
+                    "args_provided": args_dict,
+                    "query_string": query_string,
+                    "result": kb_result_data
                 }
             }
-            logger.debug(f"NLG Input Context: {json.dumps(nlg_input_context, indent=2, default=str)}") 
+            logger.debug(f"NLG Input Context: {json.dumps(nlg_input_context, indent=2, default=str)}")
 
             logger.info("Step 5: Running NLG LLM call")
             try:
                 nlg_response = client.chat.completions.create(
-                    model="gpt-4o", 
+                    model="gpt-4o",
                     messages=[
                         {"role": "system", "content": nlg_prompt},
                         {"role": "user", "content": json.dumps(nlg_input_context, indent=2, default=str)}
                     ],
-                    temperature=0.3 
+                    temperature=0.3
                 )
                 final_answer = nlg_response.choices[0].message.content.strip()
                 logger.info(f"Generated final answer: {final_answer}")
@@ -371,14 +355,14 @@ def process_message():
 
             end_time = time.time()
             logger.info(f"Total processing time: {end_time - start_time:.2f} seconds")
-            
+
             response_data = {
                 'response': final_answer,
-                'explanation': explanation_string,
-                'debug': { 
+                'explanation': explanation_string, 
+                'debug': {
                     'nlu': nlu_json,
                     'prolog_query': query_string,
-                    'prolog_result': kb_result_data 
+                    'prolog_result': kb_result_data
                 }
             }
             return jsonify(response_data), 200, headers
@@ -387,13 +371,14 @@ def process_message():
             logger.error(f"Received unexpected NLU status: {nlu_status}. NLU JSON: {nlu_json}")
             return jsonify({
                 'response': "I'm sorry, I encountered an unexpected issue understanding that request.",
+                 'explanation': None, 
                  'debug': {'nlu': nlu_json}
-            }), 200, headers 
+            }), 200, headers
 
     except FileNotFoundError as fnf_err:
         logger.error(f"Configuration file not found: {fnf_err}", exc_info=True)
         return jsonify({'error': 'Server configuration error (missing files).'}), 500, headers
-    except ValueError as val_err: 
+    except ValueError as val_err:
         logger.error(f"Data validation or processing error: {val_err}", exc_info=True)
         return jsonify({'error': f'Failed to process message: {val_err}'}), 500, headers 
     except Exception as e:
