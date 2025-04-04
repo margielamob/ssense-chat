@@ -1,4 +1,4 @@
-#SSENSE Return Policy Chatbot - Neuro-Symbolic PoC
+##SSENSE Return Policy Chatbot - Neuro-Symbolic PoC
 
 I extracted and translated SSENSE’s return policy into structured logical rules. This Natural Language to Logical Rules pipelines is still a work in progress. I then used this as a Prolog knowledge base to enable precise and automated **reasoning** about returns. It combines neural and symbolic methods to **accurately** answer customer questions. 
 
