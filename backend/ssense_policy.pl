@@ -1,4 +1,4 @@
-% Optimized SSENSE Return Policy - Prolog Knowledge Base (Cleaned v1)
+% Optimized SSENSE Return Policy - Prolog Knowledge Base (Cleaned v1 + Explanations)
 
 % --- Directives ---
 :- discontiguous(instance/2).
@@ -34,6 +34,7 @@
 :- discontiguous(return_option/2).
 :- discontiguous(is_eligible/5).
 :- discontiguous(check_category_specific_rules/4).
+:- discontiguous(predicate_explanation/3). 
 
 % Directives for LLM Helper Predicates
 :- discontiguous(get_return_window/1).
@@ -280,6 +281,39 @@ check_category_specific_rules(technology, _Condition, _Packaging, _Tags) :-
     applies_rule(crit, technology, rule_include_manuals_accessories), !, true. % Placeholder
 check_category_specific_rules(ItemType, _Condition, _Packaging, _Tags) :-
     \+ applies_rule(crit, ItemType, _). % Default: passes if no specific rule applies
+    
+% --- Predicate Explanations ---
+% Defines user-friendly explanations for key predicates used by the LLM.
+% Format: predicate_explanation(PredicateName, Arity, ExplanationString).
+
+predicate_explanation(is_eligible, 5, 
+    'I checked if the item meets all return conditions: type, condition, packaging, tags, and time since delivery based on the policy.').
+predicate_explanation(get_return_window, 1, 
+    'I looked up the standard return time frame allowed by the policy.').
+predicate_explanation(get_shipping_cost, 2, 
+    'I checked the policy for return shipping costs based on the region provided.').
+predicate_explanation(get_return_label_info, 2, 
+    'I checked how SSENSE provides return labels for the specified region according to the policy.').
+predicate_explanation(get_return_fee, 3, 
+    'I checked the policy for specific return fees applicable to the region provided.').
+predicate_explanation(is_item_excluded, 2, 
+    'I checked the list of item types that are specifically excluded from returns (like final sale or hygiene items) according to the policy.').
+predicate_explanation(get_initiation_method, 2, 
+    'I looked up the procedure for starting a return based on whether you have an account or checked out as a guest, as defined in the policy.').
+predicate_explanation(can_exchange, 1, 
+    'I checked the policy on whether direct exchanges for items are offered.').
+predicate_explanation(get_contact_email, 1, 
+    'I looked up the official customer care email address from the policy information.').
+predicate_explanation(get_contact_chat_availability, 1, 
+    'I checked the stated availability hours for chat support based on the policy information.').
+predicate_explanation(get_phone_number, 3, 
+    'I looked up the specific phone number and operating hours based on the type requested (e.g., toll-free), according to the policy details.').
+predicate_explanation(get_damaged_item_action, 1, 
+    'I checked the policy for the recommended first step when an item arrives damaged.').
+predicate_explanation(get_warranty_provider, 1, 
+    'I looked up who typically provides the warranty for products (usually the manufacturer) based on the policy.').
+predicate_explanation(is_warranty_by_ssense, 1, 
+    'I checked if SSENSE itself provides the product warranty according to the policy (which is generally not the case).').
 
 
 % --- LLM Helper Predicates ---
