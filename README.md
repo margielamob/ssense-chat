@@ -6,6 +6,8 @@ I extracted and translated SSENSE’s return policy into structured logical rule
 
 Previously, I built an AI chatbot for a real client, CentreDMV, as part of a final group project at school (GitHub repo). That chatbot utilized GPT-4 through OpenAI's API, and we reduced hallucinations by fine-tuning tool usage. However, it was not as robust or accurate as this neuro-symbolic AI approach.
 
+Furthermore, this neuro-symbolic architecture offers **explainability**. Unlike purely neural approaches where the reasoning can be a black box, this project highlights the symbolic component (Prolog) for core policy logic. I added an **"Explanation" feature** by displaying a user-friendly description of the policy rule or check made by the Prolog knowledge base to arrive at the answer. I believe this to be better not only for user trust but also for development and future improvements. Seeing *why* the bot gave an answer makes it much easier to debug the logic, refine the knowledge base rules, or improve the NLU's predicate selection.
+
 ## Key Features
 
 * **Frontend :** Simple HTML/CSS/JavaScript frontend for user interaction.
