@@ -3,7 +3,7 @@
 I extracted and translated SSENSE’s return policy into structured logical rules. This Natural Language to Logical Rules pipelines is still a work in progress. I then used this as a Prolog knowledge base to enable precise and automated **reasoning** about returns. It combines neural and symbolic methods to **accurately** answer customer questions. 
 
 ### Demo
-![2× Speed Demo](assets/output_2x.gif)
+![2× Speed Demo](output_2x.gif)
 
 
 ## Relation with past works
