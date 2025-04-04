@@ -28,27 +28,6 @@ This project demonstrates a neuro-symbolic architecture:
 
 This combination leverages the strengths of both paradigms: the LLM's conversational ability and the Prolog KB's logical rigor and factual consistency.
 
-## Architecture
-
-
-User Interface             Backend Logic                External Services / KB
-+-----------------+      +----------------------+      +-----------------+
-| Frontend        |----->| Backend API (Flask)  |<---->| OpenAI API (NLU)|
-| (HTML/CSS/JS)   |      |  /api/chat           |      +-----------------+
-+-----------------+      |                      |
-^                 |         +------------V------+
-|                 |-------->| Prolog KB (Pyswip)|<----[ssense_policy.pl]
-|                 |         +-------------------+
-|                 |                      |
-|                 |         +------------V------+
-+-----------------|<--------| OpenAI API (NLG)|
-+----------------------+
-
-
-* The user interacts with the static frontend (`index.html`).
-* JavaScript sends requests to the Flask backend (`/api/chat`).
-* Flask handles NLU/Planning via OpenAI, queries the Prolog KB via Pyswip, handles NLG via OpenAI, and returns the response.
-
 ## Setup Instructions
 
 1.  **Clone the Repository:**
