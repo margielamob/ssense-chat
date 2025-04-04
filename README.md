@@ -4,7 +4,7 @@ I extracted and translated SSENSE’s return policy into structured logical rule
 
 <h3>Demo</h3>
 <div align="center">
-  <img src="output_1.5x.gif" alt="1.5× Speed Demo" width="800"/>
+  <img src="output_1.5x.gif" alt="1.5× Speed Demo" width="1000"/>
 </div>
 
 ## Relation with past works
