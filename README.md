@@ -85,4 +85,4 @@ This combination leverages the strengths of both paradigms: the LLM's conversati
     * Double-click and open the `index.html` file in your preferred web browser.
 
 ## Testing the Chatbot
-Don't forget this is just a proof of concept!!
+Don't forget this is just a proof of concept!! There's a lot of room for improvements like adding chat history context and testing more edge cases.
